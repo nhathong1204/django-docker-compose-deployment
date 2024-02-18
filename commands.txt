@@ -1,0 +1,47 @@
+1. Tạo Dockerfile:
+
+2. Tạo docker compose
+
+3. Build image
+docker-compose build
+
+4. Tạo ứng dụng django
+docker-compose run --rm app sh -c "django-admin startproject app ."
+
+5. Tùy chỉnh file settings.py
+- import os
+- set os.environ.get cho SECRET_KEY, DEBUG, ALLOWED_HOSTS
+- set environment trong services/app
+
+6. Tạo services db
+- image: db image
+- environment: set environment cho DATABASES trong settings.py
+
+7. Add psycopg2 tới file requirements.txt 
+- Change config DATABASES trong settings.py sử dụng postgresql
+- Build lại image:
+docker-compose build
+
+8. Tạo app core trong django
+docker-compose run --rm app sh -c "python manage.py startapp core"
+
+9. Tạo Sample model
+- Run lệnh migrate:
+docker-compose run --rm app sh -c "python manage.py makemigrations"
+
+10. Tạo wait_for_db.py để đảm bảo db postgresql được kết nối trước khi ứng dụng django chạy
+- gọi đến wait_for_db trong command của docker compose
+services:
+  app:
+    command: 
+        sh -c "python manage.py wait_for_db &&
+            python manage.py migrate &&
+            python manage.py runserver 0.0.0.0:8000"
+
+11. Cấu hình ứng dụng để xử lý các tệp tĩnh và media trong Dockerfile, settings.py, urls.py
+- thêm data/web từ thư mục dự án tới thư mục vol/web trên container
+ volumes:
+    - ./data/web:/vol/web
+
+12. Tạo superuser
+docker compose run --rm app sh -c "python manage.py createsuperuser"
